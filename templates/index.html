@@ -1,0 +1,384 @@
+{% extends 'base.html' %}
+{% block title %}แดชบอร์ด{% endblock %}
+{% block page_id %}dashboard{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+    <!-- Page Header -->
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1>แดชบอร์ด</h1>
+            <p>ภาพรวมระบบวิเคราะห์พลังงานแสงอาทิตย์ อำเภอบ้านโป่ง จังหวัดราชบุรี</p>
+        </div>
+        <a href="{{ url_for('gis_map') }}" class="btn btn-primary">
+            <i class="bi bi-map-fill"></i> วิเคราะห์พื้นที่ใหม่
+        </a>
+    </div>
+
+    <!-- Hero Banner with Real Project Feel -->
+    <div class="highlight-box mb-4" style="background: linear-gradient(135deg, #064e3b 0%, #065f46 45%, #1e3a8a 100%);">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:24px;position:relative;z-index:2;">
+            <div style="max-width:620px;">
+                <div class="hero-photo-badge">
+                    <i class="bi bi-patch-check-fill" style="color:#34d399;"></i> โครงงานสหกิจศึกษา / งานวิจัยภาคสนามจริง
+                </div>
+                <div style="font-family:'Inter',sans-serif;font-size:26px;font-weight:800;letter-spacing:-0.02em;color:white;line-height:1.25;margin-bottom:8px;">
+                    SolarAI Ban Pong DSS
+                </div>
+                <div style="font-size:14px;color:rgba(255,255,255,0.85);line-height:1.6;margin-bottom:12px;">
+                    ระบบสนับสนุนการตัดสินใจเพื่อการประเมินศักยภาพและวิเคราะห์ความคุ้มค่าการติดตั้งโซลาร์เซลล์ อำเภอบ้านโป่ง จังหวัดราชบุรี โดยอิงข้อมูลภูมิอากาศและงานสำรวจภาคสนามจริง
+                </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:rgba(255,255,255,0.75);">
+                    <span><i class="bi bi-geo-alt-fill text-green"></i> พื้นที่: อำเภอบ้านโป่ง</span>
+                    <span>•</span>
+                    <span><i class="bi bi-cpu-fill text-blue"></i> แบบจำลอง: Random Forest (365 วัน)</span>
+                    <span>•</span>
+                    <span><i class="bi bi-camera-fill" style="color:#fef08a;"></i> มีภาพสำรวจหน้างานจริง</span>
+                </div>
+            </div>
+            
+            <div style="display:flex;gap:14px;align-items:center;background:rgba(0,0,0,0.25);backdrop-filter:blur(8px);padding:14px 20px;border-radius:14px;border:1px solid rgba(255,255,255,0.15);">
+                <div style="text-align:center;color:white;">
+                    <div style="font-family:'Inter',sans-serif;font-size:28px;font-weight:800;line-height:1;color:#34d399;">92.1%</div>
+                    <div style="font-size:11px;opacity:.8;margin-top:4px;">R² Score</div>
+                </div>
+                <div style="height:36px;width:1px;background:rgba(255,255,255,0.2);"></div>
+                <div style="text-align:center;color:white;">
+                    <div style="font-family:'Inter',sans-serif;font-size:28px;font-weight:800;line-height:1;color:#60a5fa;">500</div>
+                    <div style="font-size:11px;opacity:.8;margin-top:4px;">Trees</div>
+                </div>
+                <div style="height:36px;width:1px;background:rgba(255,255,255,0.2);"></div>
+                <div style="text-align:center;color:white;">
+                    <div style="font-family:'Inter',sans-serif;font-size:28px;font-weight:800;line-height:1;color:#fbbf24;">4.85</div>
+                    <div style="font-size:11px;opacity:.8;margin-top:4px;">PSS แดดเฉลี่ย</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-2 col-sm-6">
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+                <div class="kpi-label">การวิเคราะห์ทั้งหมด</div>
+                <div class="kpi-value"><span id="stat-count">–</span></div>
+                <div class="kpi-sub">จุดที่วิเคราะห์แล้ว</div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-sm-6">
+            <div class="kpi-card kpi-blue">
+                <div class="kpi-icon icon-blue"><i class="bi bi-sun-fill"></i></div>
+                <div class="kpi-label">ผลิตเฉลี่ย / วัน</div>
+                <div class="kpi-value"><span id="stat-daily">–</span><span class="kpi-unit">kWh</span></div>
+                <div class="kpi-sub">ระบบที่แนะนำเฉลี่ย</div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-sm-6">
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="bi bi-calendar-check-fill"></i></div>
+                <div class="kpi-label">ผลิตเฉลี่ย / ปี</div>
+                <div class="kpi-value"><span id="stat-annual">–</span><span class="kpi-unit">kWh</span></div>
+                <div class="kpi-sub">จากทุกการวิเคราะห์</div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-sm-6">
+            <div class="kpi-card kpi-amber">
+                <div class="kpi-icon icon-amber"><i class="bi bi-piggy-bank-fill"></i></div>
+                <div class="kpi-label">ประหยัดเฉลี่ย / ปี</div>
+                <div class="kpi-value"><span id="stat-save">–</span><span class="kpi-unit">฿</span></div>
+                <div class="kpi-sub">ค่าไฟที่ประหยัดได้</div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-sm-6">
+            <div class="kpi-card kpi-purple">
+                <div class="kpi-icon icon-purple"><i class="bi bi-graph-up-arrow"></i></div>
+                <div class="kpi-label">ROI เฉลี่ย</div>
+                <div class="kpi-value"><span id="stat-roi">–</span></div>
+                <div class="kpi-sub">ผลตอบแทนต่อปี</div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-sm-6">
+            <div class="kpi-card kpi-blue">
+                <div class="kpi-icon icon-blue"><i class="bi bi-hourglass-split"></i></div>
+                <div class="kpi-label">คืนทุนเฉลี่ย</div>
+                <div class="kpi-value"><span id="stat-breakeven">–</span></div>
+                <div class="kpi-sub">ระยะเวลาคืนทุน</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts + Model Stats -->
+    <div class="row g-3 mb-4">
+        <!-- Feature Importance -->
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-bar-chart-fill"></i> Feature Importance
+                        </h6>
+                        <span class="badge badge-green">AI Model</span>
+                    </div>
+                    <div style="height:280px;">
+                        <canvas id="feature-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Info -->
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">
+                        <i class="bi bi-cpu-fill"></i> สถานะโมเดล AI
+                    </h6>
+                    <div class="d-flex align-items-center gap-2 mb-4">
+                        <span style="width:10px;height:10px;background:var(--primary);border-radius:50%;display:inline-block;box-shadow:0 0 0 4px rgba(16,185,129,.2);flex-shrink:0;"></span>
+                        <span style="font-size:13px;font-weight:600;" id="model-type">–</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span style="font-size:12px;color:var(--text-muted);">R² Score (ความแม่นยำ)</span>
+                            <span style="font-size:13px;font-weight:700;color:var(--primary-dark);font-family:'Inter',sans-serif;" id="model-r2">–</span>
+                        </div>
+                        <div class="progress-bar-wrap">
+                            <div class="progress-bar-fill" id="r2-bar" style="width:0%;"></div>
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+                        <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;text-align:center;">
+                            <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;">RMSE</div>
+                            <div style="font-size:16px;font-weight:700;font-family:'Inter',sans-serif;" id="model-rmse">–</div>
+                        </div>
+                        <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;text-align:center;">
+                            <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;">MAE</div>
+                            <div style="font-size:16px;font-weight:700;font-family:'Inter',sans-serif;" id="model-mae">–</div>
+                        </div>
+                    </div>
+
+                    <div style="font-size:11.5px;color:var(--text-muted);background:var(--surface-2);border-radius:var(--radius-sm);padding:10px;line-height:1.7;border:1px solid var(--border);">
+                        <i class="bi bi-info-circle me-1" style="color:var(--secondary);"></i>
+                        ไฟล์: <code style="font-size:10.5px;color:var(--indigo);" id="model-file">–</code><br>
+                        ฝึกจากข้อมูล 365 วัน · ใช้ lag features เพื่อความแม่นยำ
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-lg-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">
+                        <i class="bi bi-rocket-takeoff-fill"></i> เริ่มต้นใช้งาน
+                    </h6>
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <a href="{{ url_for('gis_map') }}" class="btn btn-primary w-100" style="justify-content:flex-start;">
+                            <i class="bi bi-map-fill"></i> เปิดแผนที่ GIS
+                        </a>
+                        <a href="{{ url_for('history_page') }}" class="btn btn-ghost w-100" style="justify-content:flex-start;">
+                            <i class="bi bi-clock-history"></i> ดูประวัติทั้งหมด
+                        </a>
+                        <a href="{{ url_for('report_page') }}" class="btn btn-ghost w-100" style="justify-content:flex-start;">
+                            <i class="bi bi-file-earmark-excel"></i> ออกรายงาน Excel
+                        </a>
+                        <a href="{{ url_for('settings_page') }}" class="btn btn-ghost w-100" style="justify-content:flex-start;">
+                            <i class="bi bi-gear-fill"></i> ตั้งค่าระบบ
+                        </a>
+                    </div>
+
+                    <div style="margin-top:20px;padding:12px;background:linear-gradient(135deg,var(--primary-light),var(--indigo-light));border-radius:var(--radius-sm);border:1px solid rgba(16,185,129,0.2);">
+                        <div style="font-size:11px;font-weight:700;color:var(--primary-dark);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">เกี่ยวกับระบบ</div>
+                        <div style="font-size:11.5px;color:var(--text-muted);line-height:1.7;">
+                            วิเคราะห์ศักยภาพพลังงานแสงอาทิตย์ด้วย AI สำหรับพื้นที่อำเภอบ้านโป่ง จ.ราชบุรี แสดงผลทางการเงิน ROI และแนะนำขนาดระบบที่เหมาะสม
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Field Installation & Real Study Showcase ── -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                <div>
+                    <h6 class="card-title mb-1">
+                        <i class="bi bi-images text-green"></i> ภาพถ่ายการลงพื้นที่และการติดตั้งระบบจริงในอำเภอบ้านโป่ง
+                    </h6>
+                    <p style="font-size:12.5px;color:var(--text-muted);margin:0;">
+                        ภาพบันทึกจากการสำรวจภาคสนามและการดำเนินงานติดตั้งระบบโซลาร์เซลล์จริงของโครงงานในพื้นที่อำเภอบ้านโป่ง
+                    </p>
+                </div>
+                <span class="badge badge-green" style="font-size:11.5px;padding:5px 12px;">
+                    <i class="bi bi-camera-fill me-1"></i> 4 ภาพบันทึกหน้างานจริง
+                </span>
+            </div>
+
+            <div class="project-gallery-grid">
+                <!-- Card 1: Team Installation -->
+                <div class="gallery-card" onclick="openPhotoModal('{{ url_for('static', filename='img/projects/solar_team_install.jpg') }}', 'การติดตั้งระบบจริงโดยทีมงานโครงงาน', 'ภาพการปฏิบัติงานภาคสนามของทีมนักศึกษาและผู้ควบคุม ในการติดตั้งแผงโซลาร์เซลล์บนโครงสร้างเหล็กทดสอบสมรรถนะ ณ พื้นที่อำเภอบ้านโป่ง')">
+                    <div class="gallery-thumb-wrap">
+                        <img src="{{ url_for('static', filename='img/projects/solar_team_install.jpg') }}" alt="ทีมงานติดตั้งระบบโซลาร์เซลล์" class="gallery-thumb" loading="lazy">
+                        <span class="gallery-badge"><i class="bi bi-tools"></i> งานติดตั้งจริง</span>
+                    </div>
+                    <div class="gallery-body">
+                        <div>
+                            <div class="gallery-title">การติดตั้งระบบจริงโดยทีมวิศวกรโครงงาน</div>
+                            <div class="gallery-desc">ทีมนักศึกษาดำเนินงานติดตั้งแผงโซลาร์เซลล์บนโครงสร้างเหล็กเพื่อเก็บข้อมูลภาคสนาม</div>
+                        </div>
+                        <div class="gallery-meta">
+                            <i class="bi bi-geo-alt-fill"></i> อ.บ้านโป่ง จ.ราชบุรี
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Rooftop House -->
+                <div class="gallery-card" onclick="openPhotoModal('{{ url_for('static', filename='img/projects/solar_rooftop_house.jpg') }}', 'ระบบโซลาร์รูฟท็อปบนหลังคาบ้านพักอาศัย', 'การติดตั้งแผงโซลาร์เซลล์แบบ Solar Rooftop บนหลังคาเมทัลชีทสำหรับบ้านเรือนพักอาศัยในอำเภอบ้านโป่ง ช่วยลดภาระค่าไฟฟ้าช่วงกลางวันได้อย่างคุ้มค่า')">
+                    <div class="gallery-thumb-wrap">
+                        <img src="{{ url_for('static', filename='img/projects/solar_rooftop_house.jpg') }}" alt="โซลาร์รูฟท็อปบ้านพักอาศัย" class="gallery-thumb" loading="lazy">
+                        <span class="gallery-badge"><i class="bi bi-house-door-fill"></i> โซลาร์รูฟท็อป</span>
+                    </div>
+                    <div class="gallery-body">
+                        <div>
+                            <div class="gallery-title">ระบบโซลาร์รูฟท็อปบ้านพักอาศัยจริง</div>
+                            <div class="gallery-desc">ภาพถ่ายมุมสูงแผงโซลาร์เซลล์ติดตั้งบนหลังคาบ้านเพื่อการประเมินมุมเอียงและทิศทางรับแดด</div>
+                        </div>
+                        <div class="gallery-meta">
+                            <i class="bi bi-geo-alt-fill"></i> ชุมชนในอำเภอบ้านโป่ง
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Agricultural Farm Structure -->
+                <div class="gallery-card" onclick="openPhotoModal('{{ url_for('static', filename='img/projects/solar_site_farm.jpg') }}', 'ระบบโซลาร์เซลล์สำหรับแปลงเกษตรและระบบสูบน้ำ', 'ระบบแผงโซลาร์เซลล์ติดตั้งเหนือโครงเรือน เพื่อจ่ายไฟให้กับระบบสูบน้ำและไฟส่องสว่างในแปลงเกษตรกรรม')">
+                    <div class="gallery-thumb-wrap">
+                        <img src="{{ url_for('static', filename='img/projects/solar_site_farm.jpg') }}" alt="โซลาร์เซลล์แปลงเกษตร" class="gallery-thumb" loading="lazy">
+                        <span class="gallery-badge"><i class="bi bi-flower1"></i> ภาคการเกษตร</span>
+                    </div>
+                    <div class="gallery-body">
+                        <div>
+                            <div class="gallery-title">โซลาร์เซลล์โครงสร้างเพื่อการเกษตร</div>
+                            <div class="gallery-desc">ระบบจ่ายพลังงานแสงอาทิตย์สำหรับระบบปั๊มน้ำพลังงานแสงอาทิตย์และการเกษตรยั่งยืน</div>
+                        </div>
+                        <div class="gallery-meta">
+                            <i class="bi bi-geo-alt-fill"></i> พื้นที่เกษตร อ.บ้านโป่ง
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Waterfront Drone -->
+                <div class="gallery-card" onclick="openPhotoModal('{{ url_for('static', filename='img/projects/solar_waterfront_drone.jpg') }}', 'สถานีตรวจวัดพลังงานแสงอาทิตย์ริมแหล่งน้ำ', 'ภาพมุมสูงจากอากาศยานไร้คนขับ (UAV Drone) ขณะบินสำรวจพื้นที่ริมน้ำและทดสอบระบบรับพลังงานแสงอาทิตย์')">
+                    <div class="gallery-thumb-wrap">
+                        <img src="{{ url_for('static', filename='img/projects/solar_waterfront_drone.jpg') }}" alt="สำรวจด้วยอากาศยานไร้คนขับ" class="gallery-thumb" loading="lazy">
+                        <span class="gallery-badge"><i class="bi bi-airplane-fill"></i> ภาพสำรวจโดรน</span>
+                    </div>
+                    <div class="gallery-body">
+                        <div>
+                            <div class="gallery-title">สำรวจมุมสูงด้วยอากาศยานไร้คนขับ</div>
+                            <div class="gallery-desc">บินสำรวจและตรวจวัดทิศทางการรับแสงอาทิตย์ร่วมกับระบบตรวจวัดภาคสนามริมน้ำ</div>
+                        </div>
+                        <div class="gallery-meta">
+                            <i class="bi bi-geo-alt-fill"></i> จุดสำรวจริมน้ำ บ้านโป่ง
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Photo Lightbox Modal ── -->
+    <div id="photo-modal" class="gallery-modal" onclick="closePhotoModal(event)">
+        <div class="modal-content-wrap" onclick="event.stopPropagation()">
+            <div class="modal-img-area">
+                <img id="modal-img" src="" alt="ภาพขยายงานติดตั้งจริง">
+            </div>
+            <div class="modal-info-area">
+                <div>
+                    <h5 id="modal-title" style="font-size:15px;font-weight:700;margin-bottom:4px;color:var(--text);"></h5>
+                    <p id="modal-desc" style="font-size:12.5px;color:var(--text-muted);margin:0;line-height:1.6;"></p>
+                </div>
+                <button type="button" class="btn btn-ghost" onclick="closePhotoModal()" style="padding:6px 12px;font-size:18px;">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Analyses -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-clock-history"></i> การวิเคราะห์ล่าสุด
+                </h6>
+                <a href="{{ url_for('history_page') }}" style="font-size:13px;color:var(--secondary);font-weight:500;">
+                    ดูทั้งหมด <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>สถานที่</th>
+                            <th>ความเหมาะสม</th>
+                            <th>ผลิต/วัน</th>
+                            <th>ผลิต/ปี</th>
+                            <th>ประหยัด/ปี</th>
+                            <th>ROI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-tbody">
+                        <tr>
+                            <td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;">
+                                <div class="spinner" style="width:28px;height:28px;border-width:3px;margin:0 auto;"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+    if (window.populateModelInfo) {
+        const orig = window.populateModelInfo;
+        window.populateModelInfo = function(m) {
+            orig(m);
+            const el = document.getElementById('model-file');
+            if (el && m.model_file) el.textContent = m.model_file;
+        };
+    }
+});
+
+function openPhotoModal(imgSrc, title, desc) {
+    const modal = document.getElementById('photo-modal');
+    document.getElementById('modal-img').src = imgSrc;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-desc').textContent = desc;
+    modal.classList.add('show');
+}
+
+function closePhotoModal(e) {
+    if (!e || e.target === document.getElementById('photo-modal') || e.target.closest('button')) {
+        document.getElementById('photo-modal').classList.remove('show');
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        document.getElementById('photo-modal')?.classList.remove('show');
+    }
+});
+</script>
+{% endblock %}

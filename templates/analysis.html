@@ -1,0 +1,448 @@
+{% extends 'base.html' %}
+{% block title %}ผลการวิเคราะห์ – {{ data.address }}{% endblock %}
+{% block page_id %}analysis{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+    <!-- Back -->
+    <div class="mb-3">
+        <a href="{{ url_for('gis_map') }}" style="font-size:13px;color:var(--text-muted);font-weight:500;display:inline-flex;align-items:center;gap:6px;">
+            <i class="bi bi-arrow-left"></i> กลับไปแผนที่
+        </a>
+    </div>
+
+    <!-- Hero Banner -->
+    <div class="analysis-hero mb-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3" style="position:relative;z-index:1;">
+            <div>
+                <div style="opacity:.75;font-size:12px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+                    <i class="bi bi-calendar3"></i>
+                    {{ data.analyzed_date }} เวลา {{ data.analyzed_time }}
+                </div>
+                <h2>{{ data.address }}</h2>
+                <p>{{ data.lat }}°N, {{ data.lng }}°E &nbsp;·&nbsp; ความมั่นใจ AI: <strong>{{ data.confidence }}%</strong></p>
+                <div style="margin-top:12px;display:flex;align-items:center;gap:10px;">
+                    {% for i in range(data.suitability) %}<span style="font-size:24px;color:#fef08a;">★</span>{% endfor %}
+                    {% for i in range(5 - data.suitability) %}<span style="font-size:24px;opacity:.35;color:white;">★</span>{% endfor %}
+                    <span style="font-size:13px;font-weight:600;background:rgba(255,255,255,0.15);padding:4px 12px;border-radius:20px;">{{ data.suitability_label }}</span>
+                </div>
+            </div>
+            <div class="d-flex gap-2" style="flex-wrap:wrap;">
+                <a href="/report/document/{{ data.id }}" target="_blank" class="btn" style="background:#10b981;border:1.5px solid #34d399;color:white;font-weight:700;box-shadow:0 4px 12px rgba(16,185,129,0.35);">
+                    <i class="bi bi-file-earmark-text-fill"></i> เอกสารรายงาน / พิมพ์ PDF
+                </a>
+                <a href="/api/export/excel/{{ data.id }}" class="btn" style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.4);color:white;font-weight:600;">
+                    <i class="bi bi-file-earmark-excel-fill"></i> ดาวน์โหลด Excel
+                </a>
+                <a href="{{ url_for('gis_map') }}" class="btn" style="background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.25);color:white;font-weight:600;">
+                    <i class="bi bi-map"></i> วิเคราะห์ใหม่
+                </a>
+            </div>
+        </div>
+        <div class="hero-stats" style="position:relative;z-index:1;">
+            <div>
+                <div class="hero-stat-val">{{ data.current_daily }}</div>
+                <div class="hero-stat-label">kWh / วัน</div>
+            </div>
+            <div>
+                <div class="hero-stat-val">{{ "{:,.0f}".format(data.annual_kwh) }}</div>
+                <div class="hero-stat-label">kWh / ปี</div>
+            </div>
+            <div>
+                <div class="hero-stat-val">฿{{ "{:,.0f}".format(data.annual_save) }}</div>
+                <div class="hero-stat-label">ประหยัด / ปี</div>
+            </div>
+            <div>
+                <div class="hero-stat-val">{{ data.breakeven }} ปี</div>
+                <div class="hero-stat-label">คืนทุน</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-3 mb-4">
+        <!-- Monthly Production Chart -->
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">
+                        <i class="bi bi-bar-chart-fill"></i> กำลังผลิตรายเดือน (kWh)
+                    </h6>
+                    <div style="height:240px;">
+                        <canvas id="monthly-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROI Timeline -->
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">
+                        <i class="bi bi-graph-up-arrow"></i> เส้นทางคืนทุน (15 ปี)
+                    </h6>
+                    <div style="height:240px;">
+                        <canvas id="roi-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Comparison -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h6 class="card-title mb-3">
+                <i class="bi bi-layers-fill"></i> เปรียบเทียบขนาดระบบโซลาร์เซลล์
+            </h6>
+            <div class="system-comparison">
+                {% if data.recommendation_note %}
+                <div class="rec-reason-banner mb-3" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:linear-gradient(135deg,var(--primary-light),#e0e7ff);border-radius:var(--radius-sm);border:1px solid rgba(16,185,129,0.25);">
+                    <span class="badge badge-green" style="font-size:12px;padding:4px 10px;flex-shrink:0;">
+                        ⭐ แนะนำ {{ data.recommended.kw }} kW
+                    </span>
+                    <span style="font-size:12px;color:var(--primary-dark);font-weight:600;">{{ data.recommendation_note }}</span>
+                </div>
+                {% endif %}
+                {% for s in data.systems %}
+                <div class="sys-compare-card {% if s.recommended %}recommended{% endif %}">
+                    {% if s.recommended %}
+                    <div style="margin-bottom:10px;">
+                        <span class="badge badge-green" style="font-size:12px;padding:5px 12px;">
+                            <i class="bi bi-star-fill"></i> ระบบที่แนะนำ
+                        </span>
+                    </div>
+                    {% endif %}
+                    <h3 style="{% if s.recommended %}color:var(--primary-dark);{% endif %}">{{ s.kw }} kW</h3>
+                    <div class="sys-label">ระบบโซลาร์เซลล์</div>
+                    {% if s.note %}
+                    <div style="font-size:11px;color:{% if s.recommended %}var(--primary-dark){% else %}var(--text-muted){% endif %};margin-top:4px;font-weight:500;">
+                        {{ s.note }}
+                    </div>
+                    {% endif %}
+                    <hr style="border-color:var(--border);margin:12px 0;">
+                    <div class="sys-detail">
+                        ผลิต / ปี
+                        <strong>{{ "{:,.0f}".format(s.annual_kwh) }} kWh</strong>
+                    </div>
+                    <div class="sys-detail">
+                        ราคาติดตั้ง
+                        <strong>฿{{ "{:,.0f}".format(s.cost) }}</strong>
+                    </div>
+                    <div class="sys-detail">
+                        ประหยัด / เดือน
+                        <strong style="color:var(--primary-dark);">฿{{ "{:,.0f}".format(s.monthly_save) }}</strong>
+                    </div>
+                    <div class="sys-detail">
+                        ประหยัด / ปี
+                        <strong style="color:var(--primary-dark);">฿{{ "{:,.0f}".format(s.annual_save) }}</strong>
+                    </div>
+                    <div class="sys-detail">
+                        ROI
+                        <strong style="color:var(--indigo);">{{ s.roi }}%</strong>
+                    </div>
+                    <div class="sys-detail">
+                        คืนทุน
+                        <strong>{{ s.breakeven }} ปี</strong>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bill Comparison + Environment -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">
+                        <i class="bi bi-receipt-cutoff"></i> เปรียบเทียบค่าไฟฟ้าต่อปี
+                    </h6>
+                    <div class="bill-compare mb-3">
+                        <div class="bill-bar-label d-flex justify-content-between">
+                            <span>ก่อนติดโซลาร์เซลล์</span>
+                            <strong style="font-family:'Inter',sans-serif;">฿{{ "{:,.0f}".format(data.typical_annual_bill) }}</strong>
+                        </div>
+                        <div class="bill-bar-wrap">
+                            <div class="bill-bar-fill" style="width:100%;background:var(--red);"></div>
+                        </div>
+                    </div>
+                    <div class="bill-compare">
+                        <div class="bill-bar-label d-flex justify-content-between">
+                            <span>หลังติดโซลาร์เซลล์</span>
+                            <strong style="color:var(--primary-dark);font-family:'Inter',sans-serif;">฿{{ "{:,.0f}".format(data.bill_with_solar) }}</strong>
+                        </div>
+                        <div class="bill-bar-wrap">
+                            <div class="bill-bar-fill" style="width:{{ [((data.bill_with_solar / (data.typical_annual_bill or 1)) * 100)|int, 5]|max }}%;background:var(--primary);"></div>
+                        </div>
+                    </div>
+                    <div style="margin-top:16px;padding:14px;background:linear-gradient(135deg,var(--primary-light),#e0e7ff);border-radius:var(--radius-sm);border:1px solid rgba(16,185,129,0.2);">
+                        <div style="font-size:14px;font-weight:700;color:var(--primary-dark);">
+                            ประหยัดได้ ฿{{ "{:,.0f}".format(data.annual_save) }} / ปี
+                        </div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
+                             คิดเป็น {{ [((data.annual_save / (data.typical_annual_bill or 1)) * 100)|int, 100]|min }}% ของค่าไฟฟ้าทั้งหมด
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">
+                        <i class="bi bi-tree-fill"></i> ผลกระทบต่อสิ่งแวดล้อม / ปี
+                    </h6>
+                    <div class="row g-3" style="margin:0;">
+                        <div class="col-6" style="padding:6px;">
+                            <div style="text-align:center;padding:22px 16px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:var(--radius);border:1.5px solid var(--primary-mid);">
+                                <div style="font-size:40px;">🌿</div>
+                                <div style="font-size:26px;font-weight:700;color:var(--primary-dark);margin-top:8px;font-family:'Inter',sans-serif;">{{ "{:,.0f}".format(data.co2_saved_kg) }}</div>
+                                <div style="font-size:11px;color:var(--text-muted);margin-top:3px;font-weight:500;">kg CO₂ ที่ลดได้ / ปี</div>
+                            </div>
+                        </div>
+                        <div class="col-6" style="padding:6px;">
+                            <div style="text-align:center;padding:22px 16px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:var(--radius);border:1.5px solid var(--primary-mid);">
+                                <div style="font-size:40px;">🌳</div>
+                                <div style="font-size:26px;font-weight:700;color:var(--primary-dark);margin-top:8px;font-family:'Inter',sans-serif;">{{ data.trees_equiv }}</div>
+                                <div style="font-size:11px;color:var(--text-muted);margin-top:3px;font-weight:500;">ต้นไม้เทียบเท่า / ปี</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top:14px;font-size:11.5px;color:var(--text-muted);line-height:1.7;padding:10px;background:var(--surface-2);border-radius:var(--radius-sm);">
+                        <i class="bi bi-info-circle me-1" style="color:var(--secondary);"></i>
+                        คำนวณจาก Emission factor ไฟฟ้าไทย (0.4985 kgCO₂/kWh) และอัตราดูดซับ CO₂ ของต้นไม้ (21.77 kg/ต้น/ปี)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Data Table -->
+    <div class="card">
+        <div class="card-body">
+            <h6 class="card-title mb-3">
+                <i class="bi bi-table"></i> ข้อมูลการผลิตรายเดือน
+            </h6>
+            <div style="overflow-x:auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>เดือน</th>
+                            <th>ฤดูกาล</th>
+                            <th>ผลิต / วัน (kWh)</th>
+                            <th>ผลิต / เดือน (kWh)</th>
+                            <th>ประหยัด / เดือน (฿)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in data.monthly_data %}
+                        <tr>
+                            <td><strong>{{ m.month_name }}</strong></td>
+                            <td>
+                                {% if m.season == 'Summer' %}<span class="badge badge-amber">☀️ ฤดูร้อน</span>
+                                {% elif m.season == 'Rainy' %}<span class="badge badge-blue">🌧️ ฤดูฝน</span>
+                                {% else %}<span class="badge badge-indigo">🌬️ ฤดูหนาว</span>{% endif %}
+                            </td>
+                            <td style="font-family:'Inter',sans-serif;font-weight:600;">{{ m.daily_kwh }}</td>
+                            <td style="font-family:'Inter',sans-serif;font-weight:600;">{{ "{:,.1f}".format(m.monthly_kwh) }}</td>
+                            <td style="color:var(--primary-dark);font-weight:700;font-family:'Inter',sans-serif;">
+                                ฿{{ "{:,.0f}".format([m.monthly_kwh * data.electricity_rate, data.monthly_bill]|min) }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:linear-gradient(90deg,var(--primary-light),var(--indigo-light));font-weight:700;">
+                            <td colspan="3" style="color:var(--primary-dark);">รวมทั้งปี</td>
+                            <td style="font-family:'Inter',sans-serif;font-size:15px;color:var(--primary-dark);">{{ "{:,.1f}".format(data.annual_kwh) }} kWh</td>
+                            <td style="font-family:'Inter',sans-serif;font-size:15px;color:var(--primary-dark);">฿{{ "{:,.0f}".format(data.annual_save) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Field Implementation Showcase ── -->
+    <div class="card mt-4 mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <div>
+                    <h6 class="card-title mb-1">
+                        <i class="bi bi-camera-fill text-green"></i> ภาพถ่ายอ้างอิงการติดตั้งระบบจริงในพื้นที่อำเภอบ้านโป่ง
+                    </h6>
+                    <p style="font-size:12.5px;color:var(--text-muted);margin:0;">
+                        ตัวอย่างลักษณะการติดตั้งแผงโซลาร์เซลล์จริงใน อ.บ้านโป่ง ตามขนาดระบบและลักษณะพื้นที่
+                    </p>
+                </div>
+                <a href="/report/document/{{ data.id }}" target="_blank" class="btn btn-sm btn-ghost" style="color:var(--primary-dark);font-weight:600;">
+                    <i class="bi bi-file-earmark-pdf"></i> ดูในเอกสารรายงาน
+                </a>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-3 col-sm-6">
+                    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;height:100%;">
+                        <div style="height:140px;overflow:hidden;background:#0f172a;">
+                            <img src="{{ url_for('static', filename='img/projects/solar_rooftop_house.jpg') }}" alt="Solar Rooftop" style="width:100%;height:100%;object-fit:cover;">
+                        </div>
+                        <div style="padding:10px 12px;">
+                            <div style="font-size:12px;font-weight:700;color:var(--text);">Solar Rooftop (3 - 5 kW)</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">ติดตั้งบนหลังคาบ้านพักอาศัย เมทัลชีท/กระเบื้อง</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;height:100%;">
+                        <div style="height:140px;overflow:hidden;background:#0f172a;">
+                            <img src="{{ url_for('static', filename='img/projects/solar_team_install.jpg') }}" alt="Team Installation" style="width:100%;height:100%;object-fit:cover;">
+                        </div>
+                        <div style="padding:10px 12px;">
+                            <div style="font-size:12px;font-weight:700;color:var(--text);">ทีมงานติดตั้งจริงภาคสนาม</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">ประกอบแผงและเดินระบบสายไฟตามมาตรฐานวิศวกรรม</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;height:100%;">
+                        <div style="height:140px;overflow:hidden;background:#0f172a;">
+                            <img src="{{ url_for('static', filename='img/projects/solar_site_farm.jpg') }}" alt="Agricultural Solar" style="width:100%;height:100%;object-fit:cover;">
+                        </div>
+                        <div style="padding:10px 12px;">
+                            <div style="font-size:12px;font-weight:700;color:var(--text);">ระบบเพื่อการเกษตร (10 - 20 kW)</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">โครงสร้างเหนือโรงเรือน/ระบบสูบน้ำแปลงเกษตร</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;height:100%;">
+                        <div style="height:140px;overflow:hidden;background:#0f172a;">
+                            <img src="{{ url_for('static', filename='img/projects/solar_waterfront_drone.jpg') }}" alt="UAV Survey" style="width:100%;height:100%;object-fit:cover;">
+                        </div>
+                        <div style="padding:10px 12px;">
+                            <div style="font-size:12px;font-weight:700;color:var(--text);">การสำรวจด้วยโดรน (UAV)</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">ตรวจวัดมุมรับแดดและเงาบดบังในพื้นที่จริง</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script id="analysis-data" type="application/json">{{ data_json|safe }}</script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const d = JSON.parse(document.getElementById('analysis-data').textContent);
+
+    // Color by season
+    const seasonColors = {
+        'Summer': { bg: 'rgba(245,158,11,0.85)', border: '#d97706' },
+        'Rainy':  { bg: 'rgba(14,165,233,0.85)',  border: '#0284c7' },
+        'Winter': { bg: 'rgba(79,70,229,0.85)',   border: '#4338ca' },
+    };
+
+    // Monthly production bar chart
+    new Chart(document.getElementById('monthly-chart'), {
+        type: 'bar',
+        data: {
+            labels: d.chart_monthly_names,
+            datasets: [{
+                label: 'kWh',
+                data: d.chart_monthly_kwh,
+                backgroundColor: d.monthly_data.map(m => (seasonColors[m.season] || seasonColors['Winter']).bg),
+                borderColor:     d.monthly_data.map(m => (seasonColors[m.season] || seasonColors['Winter']).border),
+                borderWidth: 1.5,
+                borderRadius: 8,
+                borderSkipped: false,
+            }],
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` ${ctx.raw.toLocaleString()} kWh`,
+                        title: ctx => ctx[0].label,
+                    },
+                    padding: 12, cornerRadius: 8,
+                    backgroundColor: 'rgba(15,23,42,0.9)',
+                    titleColor: '#e2e8f0', bodyColor: '#94a3b8',
+                },
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { family: "'Sarabun'", size: 11 } } },
+                y: {
+                    grid: { color: '#f1f5f9' },
+                    ticks: { font: { family: "'Inter'", size: 11 } },
+                    beginAtZero: true,
+                },
+            },
+        },
+    });
+
+    // ROI timeline line chart
+    const nets  = d.roi_timeline.map(r => r.net);
+    const years = d.roi_timeline.map(r => 'ปีที่ ' + r.year);
+    new Chart(document.getElementById('roi-chart'), {
+        type: 'line',
+        data: {
+            labels: years,
+            datasets: [{
+                label: 'กำไรสะสม (฿)',
+                data: nets,
+                borderColor: '#10b981',
+                backgroundColor: function(ctx) {
+                    const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 240);
+                    gradient.addColorStop(0, 'rgba(16,185,129,0.20)');
+                    gradient.addColorStop(1, 'rgba(16,185,129,0.01)');
+                    return gradient;
+                },
+                fill: true, tension: 0.35,
+                pointRadius: 3,
+                pointBackgroundColor: nets.map(v => v >= 0 ? '#10b981' : '#ef4444'),
+                borderWidth: 2.5,
+            }],
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: { label: ctx => ` ฿${Math.round(ctx.raw).toLocaleString()}` },
+                    padding: 12, cornerRadius: 8,
+                    backgroundColor: 'rgba(15,23,42,0.9)',
+                    titleColor: '#e2e8f0', bodyColor: '#94a3b8',
+                },
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { family: "'Sarabun'", size: 10 }, maxRotation: 0 },
+                },
+                y: {
+                    grid: { color: '#f1f5f9' },
+                    ticks: {
+                        font: { family: "'Inter'", size: 10 },
+                        callback: v => `฿${(v/1000).toFixed(0)}k`,
+                    },
+                },
+            },
+        },
+    });
+})();
+</script>
+{% endblock %}

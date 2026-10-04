@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายงานผลการวิเคราะห์พลังงานแสงอาทิตย์ – {{ data.address }}</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #059669;
+            --primary-dark: #047857;
+            --primary-light: #ecfdf5;
+            --accent: #2563eb;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --bg: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Action Toolbar (Hidden during print) ── */
+        .no-print-toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .toolbar-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .toolbar-badge {
+            background: #10b981;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-print {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+        }
+        .btn-print:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-1px);
+        }
+
+        .btn-excel {
+            background: #1e293b;
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+        .btn-excel:hover {
+            background: #334155;
+            color: white;
+        }
+
+        .btn-back {
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .btn-back:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* ── Document Container ── */
+        .doc-wrapper {
+            max-width: 960px;
+            margin: 32px auto 60px;
+            padding: 0 20px;
+        }
+
+        .doc-paper {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0,0,0,0.1);
+            padding: 48px;
+            position: relative;
+        }
+
+        /* ── Header ── */
+        .doc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 24px;
+            border-bottom: 2px solid #059669;
+            margin-bottom: 30px;
+        }
+
+        .brand-block {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-icon {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #10b981, #047857);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 26px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .brand-text h1 {
+            font-size: 20px;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.3px;
+        }
+
+        .brand-text p {
+            font-size: 12.5px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .doc-meta {
+            text-align: right;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .doc-meta .ref-id {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 13px;
+            background: #f1f5f9;
+            padding: 3px 8px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+
+        /* ── Title Banner ── */
+        .title-banner {
+            background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+            border-radius: 12px;
+            padding: 24px 28px;
+            color: white;
+            margin-bottom: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .title-banner::after {
+            content: '';
+            position: absolute;
+            right: -20px;
+            bottom: -30px;
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .title-banner h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .title-banner .sub {
+            font-size: 13.5px;
+            opacity: 0.9;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .title-banner .sub span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ── KPI Grid ── */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-box {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 18px;
+            text-align: left;
+            position: relative;
+            border-left: 4px solid var(--primary);
+        }
+
+        .kpi-box.highlight {
+            background: linear-gradient(135deg, #ecfdf5, #f0fdf4);
+            border-color: #a7f3d0;
+            border-left: 4px solid #10b981;
+        }
+
+        .kpi-box-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .kpi-box-val {
+            font-family: 'Inter', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.2;
+        }
+
+        .kpi-box-sub {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* ── Section Blocks ── */
+        .section-block {
+            margin-bottom: 32px;
+            page-break-inside: avoid;
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1.5px solid #f1f5f9;
+        }
+
+        .section-title i {
+            color: var(--primary);
+            font-size: 17px;
+        }
+
+        /* ── Chart Container ── */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .chart-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .chart-card h4 {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chart-area {
+            position: relative;
+            height: 220px;
+            width: 100%;
+        }
+
+        /* ── Data Tables ── */
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+            margin-top: 8px;
+        }
+
+        .report-table th {
+            background: #f1f5f9;
+            color: #334155;
+            font-weight: 700;
+            padding: 10px 12px;
+            text-align: left;
+            border-top: 1px solid var(--border);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .report-table th.num, .report-table td.num {
+            text-align: right;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .report-table th.center, .report-table td.center {
+            text-align: center;
+        }
+
+        .report-table td {
+            padding: 9px 12px;
+            border-bottom: 1px solid var(--border);
+            color: #1e293b;
+        }
+
+        .report-table tr:nth-child(even) td {
+            background-color: #fafafa;
+        }
+
+        .report-table tr.highlight-row td {
+            background-color: #ecfdf5 !important;
+            font-weight: 700;
+            color: #065f46;
+        }
+
+        .report-table tr.total-row td {
+            background-color: #f1f5f9;
+            font-weight: 800;
+            border-top: 2px solid #cbd5e1;
+            border-bottom: 2px solid #cbd5e1;
+        }
+
+        /* ── Recommendation Callout ── */
+        .rec-callout {
+            background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+            border: 1.5px solid #a7f3d0;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 28px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .rec-callout-icon {
+            font-size: 26px;
+            color: #059669;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .rec-callout-title {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #065f46;
+            margin-bottom: 4px;
+        }
+
+        .rec-callout-body {
+            font-size: 13px;
+            color: #166534;
+            line-height: 1.6;
+        }
+
+        /* ── Environmental Impact Grid ── */
+        .env-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .env-card {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .env-icon-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        /* ── Footer ── */
+        .doc-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 11.5px;
+            color: #94a3b8;
+        }
+
+        .cert-stamp {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border: 1.5px dashed #059669;
+            border-radius: 8px;
+            color: #059669;
+            font-weight: 700;
+            font-size: 11px;
+            background: #ecfdf5;
+        }
+
+        /* ══════════════════════════════════════════════════════════════════════
+           PRINT MEDIA QUERIES (A4 Optimization)
+           ══════════════════════════════════════════════════════════════════════ */
+        @media print {
+            .no-print-toolbar {
+                display: none !important;
+            }
+
+            body {
+                background: white !important;
+                color: black !important;
+            }
+
+            .doc-wrapper {
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .doc-paper {
+                box-shadow: none !important;
+                padding: 10mm 15mm !important;
+                border-radius: 0 !important;
+            }
+
+            .title-banner {
+                background: #064e3b !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                color: white !important;
+            }
+
+            .kpi-box {
+                background: #f8fafc !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .kpi-box.highlight {
+                background: #ecfdf5 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .report-table th {
+                background: #f1f5f9 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .report-table tr.highlight-row td {
+                background: #ecfdf5 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .charts-row {
+                grid-template-columns: 1fr 1fr !important;
+            }
+
+            .chart-area {
+                height: 200px !important;
+            }
+
+            .section-block {
+                page-break-inside: avoid;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .doc-paper { padding: 24px 16px; }
+            .kpi-grid { grid-template-columns: 1fr 1fr; }
+            .charts-row { grid-template-columns: 1fr; }
+            .env-grid { grid-template-columns: 1fr; }
+            .doc-header { flex-direction: column; gap: 16px; }
+            .doc-meta { text-align: left; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Sticky Action Toolbar ── -->
+    <header class="no-print-toolbar">
+        <div class="toolbar-info">
+            <span class="toolbar-badge"><i class="bi bi-file-earmark-check-fill"></i> รายงานฉบับสมบูรณ์</span>
+            <span>SolarAI Ban Pong DSS &nbsp;|&nbsp; <strong>{{ data.address }}</strong></span>
+        </div>
+        <div class="toolbar-actions">
+            <button onclick="window.print()" class="btn btn-print" title="พิมพ์หรือบันทึกเป็น PDF">
+                <i class="bi bi-printer-fill"></i> พิมพ์ / บันทึกเป็น PDF
+            </button>
+            <a href="/api/export/excel/{{ data.id }}" class="btn btn-excel" title="ดาวน์โหลดไฟล์ Excel พร้อมกราฟ">
+                <i class="bi bi-file-earmark-excel-fill"></i> ดาวน์โหลด Excel
+            </a>
+            <a href="/analysis/{{ data.id }}" class="btn btn-back" title="กลับไปหน้าแดชบอร์ดผลวิเคราะห์">
+                <i class="bi bi-arrow-left"></i> กลับผลวิเคราะห์
+            </a>
+        </div>
+    </header>
+
+    <!-- ── Document Main Container ── -->
+    <main class="doc-wrapper">
+        <article class="doc-paper">
+
+            <!-- ── Document Header ── -->
+            <header class="doc-header">
+                <div class="brand-block">
+                    <div class="brand-icon">
+                        <i class="bi bi-sun-fill"></i>
+                    </div>
+                    <div class="brand-text">
+                        <h1>SolarAI Ban Pong DSS</h1>
+                        <p>ระบบสนับสนุนการตัดสินใจติดตั้งระบบผลิตไฟฟ้าพลังงานแสงอาทิตย์</p>
+                    </div>
+                </div>
+                <div class="doc-meta">
+                    <div class="ref-id">REF: #{{ data.id }}</div>
+                    <div>วันที่ประเมิน: {{ data.analyzed_date }} {{ data.analyzed_time }}</div>
+                    <div>พิกัด: {{ data.lat }}°N, {{ data.lng }}°E</div>
+                </div>
+            </header>
+
+            <!-- ── Title Banner ── -->
+            <section class="title-banner">
+                <h2>รายงานผลการประเมินความเป็นไปได้ในการติดตั้งโซลาร์เซลล์</h2>
+                <div class="sub">
+                    <span><i class="bi bi-geo-alt-fill"></i> {{ data.address }}</span>
+                    <span><i class="bi bi-cpu-fill"></i> ความมั่นใจ AI: {{ data.confidence }}%</span>
+                    <span><i class="bi bi-star-fill" style="color:#fef08a;"></i> ความเหมาะสม: {{ data.suitability }}/5 ดาว ({{ data.suitability_label }})</span>
+                </div>
+            </section>
+
+            <!-- ── KPI Summary Cards ── -->
+            <section class="kpi-grid">
+                <div class="kpi-box highlight">
+                    <div class="kpi-box-title">ระบบที่แนะนำ</div>
+                    <div class="kpi-box-val" style="color:#059669;">{{ data.recommended.kw }} kW</div>
+                    <div class="kpi-box-sub">งบลงทุน: ฿{{ "{:,.0f}".format(data.recommended.cost) }}</div>
+                </div>
+                <div class="kpi-box">
+                    <div class="kpi-box-title">ผลิตไฟฟ้า / ปี</div>
+                    <div class="kpi-box-val">{{ "{:,.0f}".format(data.annual_kwh) }}</div>
+                    <div class="kpi-box-sub">เฉลี่ย {{ data.current_daily }} kWh / วัน</div>
+                </div>
+                <div class="kpi-box">
+                    <div class="kpi-box-title">ประหยัดค่าไฟ / ปี</div>
+                    <div class="kpi-box-val" style="color:#0284c7;">฿{{ "{:,.0f}".format(data.annual_save) }}</div>
+                    <div class="kpi-box-sub">ประหยัด ฿{{ "{:,.0f}".format(data.monthly_save) }} / เดือน</div>
+                </div>
+                <div class="kpi-box">
+                    <div class="kpi-box-title">ระยะเวลาคืนทุน</div>
+                    <div class="kpi-box-val" style="color:#d97706;">{{ data.breakeven }} ปี</div>
+                    <div class="kpi-box-sub">ผลตอบแทน ROI {{ data.roi }}% ต่อปี</div>
+                </div>
+            </section>
+
+            <!-- ── AI Recommendation Callout ── -->
+            {% if data.recommendation_note %}
+            <section class="rec-callout">
+                <div class="rec-callout-icon">
+                    <i class="bi bi-lightbulb-fill"></i>
+                </div>
+                <div>
+                    <div class="rec-callout-title">ข้อเสนอแนะและผลการวิเคราะห์จากระบบ AI</div>
+                    <div class="rec-callout-body">{{ data.recommendation_note }}</div>
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- ── Visual Charts Row ── -->
+            <section class="section-block">
+                <h3 class="section-title">
+                    <i class="bi bi-bar-chart-fill"></i> ภาพรวมการผลิตไฟฟ้าและผลตอบแทนทางการเงิน
+                </h3>
+                <div class="charts-row">
+                    <!-- Chart 1: Monthly Generation -->
+                    <div class="chart-card">
+                        <h4><i class="bi bi-graph-up"></i> พยากรณ์การผลิตไฟฟ้ารายเดือน (kWh)</h4>
+                        <div class="chart-area">
+                            <canvas id="doc-monthly-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart 2: Payback & ROI Timeline -->
+                    <div class="chart-card">
+                        <h4><i class="bi bi-cash-coin"></i> เส้นทางคืนทุนและการประหยัดสะสม 15 ปี</h4>
+                        <div class="chart-area">
+                            <canvas id="doc-roi-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── System Size Comparison Table ── -->
+            <section class="section-block">
+                <h3 class="section-title">
+                    <i class="bi bi-table"></i> ตารางเปรียบเทียบขนาดระบบโซลาร์เซลล์ (3 – 20 kW)
+                </h3>
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th class="center" style="width: 110px;">ขนาดระบบ</th>
+                            <th>กลุ่มผู้ใช้งานที่เหมาะสม</th>
+                            <th class="num">ผลิต/ปี (kWh)</th>
+                            <th class="num">ราคาติดตั้ง (บาท)</th>
+                            <th class="num">ประหยัด/ปี (บาท)</th>
+                            <th class="num">ROI (%)</th>
+                            <th class="center">ระยะคืนทุน</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sys in data.systems %}
+                        <tr class="{% if sys.recommended %}highlight-row{% endif %}">
+                            <td class="center">
+                                <strong>{{ sys.kw }} kW</strong>
+                                {% if sys.recommended %}
+                                <div style="font-size:11px;color:#059669;font-weight:700;">★ แนะนำ</div>
+                                {% endif %}
+                            </td>
+                            <td>{{ sys.label }}</td>
+                            <td class="num">{{ "{:,.0f}".format(sys.annual_kwh) }}</td>
+                            <td class="num">฿{{ "{:,.0f}".format(sys.cost) }}</td>
+                            <td class="num">฿{{ "{:,.0f}".format(sys.annual_save) }}</td>
+                            <td class="num">{{ sys.roi }}%</td>
+                            <td class="center"><strong>{{ sys.breakeven }} ปี</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- ── Monthly Forecast Table ── -->
+            <section class="section-block">
+                <h3 class="section-title">
+                    <i class="bi bi-calendar3"></i> ตารางแจกแจงการผลิตไฟฟ้ารายเดือน (12 เดือน)
+                </h3>
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>เดือน</th>
+                            <th class="center">ฤดูกาล</th>
+                            <th class="num">ผลิตเฉลี่ย/วัน (kWh)</th>
+                            <th class="num">ผลิตรวม/เดือน (kWh)</th>
+                            <th class="num">ประหยัดค่าไฟ/เดือน (บาท)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in data.monthly_data %}
+                        <tr>
+                            <td>{{ m.month_name }}</td>
+                            <td class="center">{{ m.season }}</td>
+                            <td class="num">{{ "{:,.2f}".format(m.daily_kwh) }}</td>
+                            <td class="num">{{ "{:,.1f}".format(m.monthly_kwh) }}</td>
+                            <td class="num">฿{{ "{:,.0f}".format(m.monthly_save if m.monthly_save is defined else (m.monthly_kwh * 4.18)) }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="total-row">
+                            <td colspan="2"><strong>รวมทั้งปี</strong></td>
+                            <td class="num">{{ "{:,.2f}".format(data.current_daily) }}</td>
+                            <td class="num">{{ "{:,.1f}".format(data.annual_kwh) }}</td>
+                            <td class="num" style="color:#059669;">฿{{ "{:,.0f}".format(data.annual_save) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- ── Environmental Benefits ── -->
+            <section class="section-block">
+                <h3 class="section-title">
+                    <i class="bi bi-tree-fill"></i> ประโยชน์ด้านสิ่งแวดล้อมและความยั่งยืน
+                </h3>
+                <div class="env-grid">
+                    <div class="env-card">
+                        <div class="env-icon-circle" style="background:#dcfce7;color:#16a34a;">
+                            <i class="bi bi-cloud-slash-fill"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:12px;color:var(--text-muted);font-weight:600;">ลดการปล่อยก๊าซ CO₂</div>
+                            <div style="font-size:18px;font-weight:800;font-family:'Inter';color:#0f172a;">
+                                {{ "{:,.0f}".format(data.co2_saved_kg) }} <span style="font-size:12px;font-weight:500;">kg/ปี</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="env-card">
+                        <div class="env-icon-circle" style="background:#e0e7ff;color:#4f46e5;">
+                            <i class="bi bi-tree-fill"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:12px;color:var(--text-muted);font-weight:600;">เทียบเท่าการปลูกต้นไม้</div>
+                            <div style="font-size:18px;font-weight:800;font-family:'Inter';color:#0f172a;">
+                                {{ "{:,.0f}".format(data.trees_equiv) }} <span style="font-size:12px;font-weight:500;">ต้น/ปี</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="env-card">
+                        <div class="env-icon-circle" style="background:#fef3c7;color:#d97706;">
+                            <i class="bi bi-sun-fill"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:12px;color:var(--text-muted);font-weight:600;">พลังงานสะอาด 25 ปี</div>
+                            <div style="font-size:18px;font-weight:800;font-family:'Inter';color:#0f172a;">
+                                {{ "{:,.0f}".format(data.annual_kwh * 25) }} <span style="font-size:12px;font-weight:500;">kWh</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── Field Implementation References ── -->
+            <section class="section-block">
+                <h3 class="section-title">
+                    <i class="bi bi-camera-fill"></i> ภาพถ่ายอ้างอิงลักษณะการติดตั้งระบบจริงในพื้นที่อำเภอบ้านโป่ง
+                </h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+                        <div style="height:150px;overflow:hidden;background:#0f172a;">
+                            <img src="{{ url_for('static', filename='img/projects/solar_rooftop_house.jpg') }}" alt="Solar Rooftop Residential" style="width:100%;height:100%;object-fit:cover;">
+                        </div>
+                        <div style="padding:10px 14px;">
+                            <div style="font-size:12px;font-weight:700;color:#0f172a;">ระบบโซลาร์รูฟท็อปสำหรับอาคาร/บ้านพักอาศัย</div>
+                            <div style="font-size:11px;color:#64748b;margin-top:2px;">ลักษณะการติดตั้งแผงบนโครงสร้างหลังคาเมทัลชีท รับแสงทิศทางใต้-ตะวันตก</div>
+                        </div>
+                    </div>
+                    <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+                        <div style="height:150px;overflow:hidden;background:#0f172a;">
+                            <img src="{{ url_for('static', filename='img/projects/solar_team_install.jpg') }}" alt="Solar Field Structural Installation" style="width:100%;height:100%;object-fit:cover;">
+                        </div>
+                        <div style="padding:10px 14px;">
+                            <div style="font-size:12px;font-weight:700;color:#0f172a;">งานติดตั้งโครงสร้างระบบจริงโดยทีมวิศวกรโครงงาน</div>
+                            <div style="font-size:11px;color:#64748b;margin-top:2px;">การติดตั้งแผงโซลาร์เซลล์บนโครงสร้างเหล็กและการเดินระบบสายไฟภาคสนาม</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── Document Footer / Cert Stamp ── -->
+            <footer class="doc-footer">
+                <div>
+                    <div><strong>เอกสารรายงานวิเคราะห์ระบบพลังงานแสงอาทิตย์</strong></div>
+                    <div>สร้างโดย: ระบบ SolarAI Ban Pong DSS (Random Forest AI Model)</div>
+                    <div style="margin-top:2px;">หมายเหตุ: ค่าพยากรณ์เป็นการประเมินทางวิศวกรรมและการเงินเบื้องต้นโดยอิงอัตราค่าไฟปัจจุบัน</div>
+                </div>
+                <div class="cert-stamp">
+                    <i class="bi bi-patch-check-fill"></i> SOLAR AI VERIFIED
+                </div>
+            </footer>
+
+        </article>
+    </main>
+
+    <!-- ── Render Interactive & Print-Ready Charts ── -->
+    <script>
+        const reportData = {{ data_json | safe }};
+
+        // Monthly Generation Chart
+        (function() {
+            const ctx = document.getElementById('doc-monthly-chart').getContext('2d');
+            const months = reportData.monthly_data.map(m => m.month_name);
+            const kwhVals = reportData.monthly_data.map(m => m.monthly_kwh);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'กำลังผลิต (kWh)',
+                        data: kwhVals,
+                        backgroundColor: '#10b981',
+                        borderRadius: 5,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false, // disable animation for instant print readiness
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => ` ${ctx.raw.toLocaleString()} kWh`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: "'Sarabun'", size: 10 } }
+                        },
+                        y: {
+                            grid: { color: '#f1f5f9' },
+                            ticks: { font: { family: "'Inter'", size: 10 } },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        })();
+
+        // ROI Timeline Chart
+        (function() {
+            const ctx = document.getElementById('doc-roi-chart').getContext('2d');
+            const years = reportData.roi_timeline.map(r => 'ปีที่ ' + r.year);
+            const nets  = reportData.roi_timeline.map(r => r.net);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        label: 'กำไรสะสม (บาท)',
+                        data: nets,
+                        borderColor: '#059669',
+                        backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 3,
+                        pointBackgroundColor: nets.map(v => v >= 0 ? '#059669' : '#ef4444'),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => ` ฿${Math.round(ctx.raw).toLocaleString()}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: "'Sarabun'", size: 9 }, maxRotation: 0 }
+                        },
+                        y: {
+                            grid: { color: '#f1f5f9' },
+                            ticks: {
+                                font: { family: "'Inter'", size: 9 },
+                                callback: v => `฿${(v/1000).toFixed(0)}k`
+                            }
+                        }
+                    }
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

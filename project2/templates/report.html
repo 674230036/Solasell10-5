@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block title %}ออกรายงาน{% endblock %}
+{% block page_id %}report{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1>ออกรายงาน</h1>
+            <p>ส่งออกข้อมูลการวิเคราะห์พลังงานแสงอาทิตย์เป็นไฟล์ Excel พร้อมกราฟ</p>
+        </div>
+        {% if history %}
+        <a href="/api/export/excel/all" class="btn btn-primary">
+            <i class="bi bi-file-earmark-excel-fill"></i> ส่งออก Excel ทั้งหมด
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Export Info Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="report-card">
+                <div class="report-icon" style="background:var(--primary-light);color:var(--primary-dark);">
+                    <i class="bi bi-file-earmark-excel-fill"></i>
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:14.5px;font-weight:700;margin-bottom:5px;">ไฟล์ Excel (.xlsx) พรีเมียม</div>
+                    <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:10px;line-height:1.7;">
+                        ส่งออกพร้อม <strong>3 Sheets</strong>: สรุปผล · พยากรณ์รายเดือน 12 เดือน · เปรียบเทียบขนาดระบบ 3, 5, 10, 15, 20 kW พร้อมกราฟแท่ง
+                    </p>
+                    <div style="display:flex;flex-direction:column;gap:4px;">
+                        <div style="font-size:12px;color:var(--primary-dark);font-weight:500;display:flex;align-items:center;gap:5px;">
+                            <i class="bi bi-check-circle-fill"></i> ปรับความกว้างคอลัมน์อัตโนมัติ
+                        </div>
+                        <div style="font-size:12px;color:var(--primary-dark);font-weight:500;display:flex;align-items:center;gap:5px;">
+                            <i class="bi bi-check-circle-fill"></i> จัดรูปแบบตัวเลขสกุลเงินไทย
+                        </div>
+                        <div style="font-size:12px;color:var(--primary-dark);font-weight:500;display:flex;align-items:center;gap:5px;">
+                            <i class="bi bi-check-circle-fill"></i> มีกราฟการผลิตรายเดือน
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="report-card">
+                <div class="report-icon" style="background:var(--indigo-light);color:var(--indigo);">
+                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:14.5px;font-weight:700;margin-bottom:5px;">เอกสารรายงานทางการ (Print / PDF)</div>
+                    <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:10px;line-height:1.7;">
+                        เอกสารสรุปผลการประเมินทางการ พร้อม <strong>กราฟสรุปการผลิตและเส้นทางคืนทุน</strong> จัดฟอร์แมตต์มาตรฐาน A4 สำหรับบันทึกเป็น PDF หรือพิมพ์ส่งต่อ
+                    </p>
+                    <div style="font-size:12px;color:var(--indigo);font-weight:500;display:flex;align-items:center;gap:5px;">
+                        <i class="bi bi-check-circle-fill"></i> มีกราฟแท่งรายเดือนและกราฟเส้นทางคืนทุน
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent analyses for export -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-list-check"></i> รายการวิเคราะห์ทั้งหมด
+                </h6>
+                <a href="{{ url_for('history_page') }}" style="font-size:13px;color:var(--secondary);font-weight:500;">
+                    ดูประวัติทั้งหมด <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+
+            {% if history %}
+            <div style="overflow-x:auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>สถานที่</th>
+                            <th>วันที่วิเคราะห์</th>
+                            <th>ผลิต/ปี</th>
+                            <th>ประหยัด/ปี</th>
+                            <th>ROI</th>
+                            <th>คืนทุน</th>
+                            <th style="min-width:240px;">ดาวน์โหลดรายงาน</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in history %}
+                        <tr>
+                            <td>
+                                <a href="/analysis/{{ r.id }}" style="color:var(--secondary);font-weight:600;">
+                                    {{ r.address or '–' }}
+                                </a>
+                                <div style="font-size:11px;color:var(--text-muted);font-family:'Inter',sans-serif;">{{ r.lat | round(4) }}°N, {{ r.lng | round(4) }}°E</div>
+                            </td>
+                            <td style="white-space:nowrap;">
+                                <div>{{ r.analyzed_date or '–' }}</div>
+                                <div style="font-size:11px;color:var(--text-muted);">{{ r.analyzed_time or '' }}</div>
+                            </td>
+                            <td style="font-family:'Inter',sans-serif;font-weight:600;">{{ "{:,.0f}".format(r.annual_kwh or 0) }} kWh</td>
+                            <td style="color:var(--primary-dark);font-weight:700;font-family:'Inter',sans-serif;">฿{{ "{:,.0f}".format(r.annual_save or 0) }}</td>
+                            <td><span class="badge badge-green" style="font-family:'Inter',sans-serif;">{{ r.roi or 0 }}%</span></td>
+                            <td style="font-family:'Inter',sans-serif;font-weight:500;">{{ r.breakeven or '–' }} ปี</td>
+                            <td>
+                                <div class="d-flex gap-2" style="flex-wrap:wrap;">
+                                    <a href="/report/document/{{ r.id }}" target="_blank" class="btn btn-sm" style="background:#10b981;color:white;font-weight:600;" title="เปิดเอกสารรายงานพร้อมกราฟสำหรับพิมพ์หรือเซฟ PDF">
+                                        <i class="bi bi-file-earmark-pdf"></i> รายงาน PDF
+                                    </a>
+                                    <a href="/api/export/excel/{{ r.id }}" class="btn btn-primary btn-sm" title="ดาวน์โหลดไฟล์ Excel">
+                                        <i class="bi bi-file-earmark-excel"></i> Excel
+                                    </a>
+                                    <a href="/analysis/{{ r.id }}" class="btn btn-ghost btn-sm" title="ดูผลวิเคราะห์">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-file-earmark-bar-graph"></i>
+                <h4>ยังไม่มีข้อมูลสำหรับออกรายงาน</h4>
+                <p>เริ่มต้นวิเคราะห์พื้นที่บนแผนที่ GIS ก่อน แล้วมาดาวน์โหลดรายงานที่นี่</p>
+                <a href="{{ url_for('gis_map') }}" class="btn btn-primary">
+                    <i class="bi bi-map-fill"></i> ไปที่ GIS Analysis
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

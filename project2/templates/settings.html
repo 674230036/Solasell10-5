@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% block title %}ตั้งค่าระบบ{% endblock %}
+{% block page_id %}settings{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="page-header">
+        <h1>ตั้งค่าระบบ</h1>
+        <p>กำหนดค่าพารามิเตอร์ที่ใช้ในการคำนวณทางการเงินและการวิเคราะห์</p>
+    </div>
+
+    <div class="row g-3">
+        <!-- Financial Settings -->
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title mb-4">
+                        <i class="bi bi-currency-dollar"></i> ค่าพารามิเตอร์ทางการเงิน
+                    </h6>
+
+                    <div class="settings-form" id="settings-form">
+                        <!-- Electricity Rate -->
+                        <div class="form-group">
+                            <label for="electricity_rate">
+                                <i class="bi bi-plug-fill" style="color:var(--amber);margin-right:6px;"></i>
+                                อัตราค่าไฟฟ้าเฉลี่ย (บาท / kWh)
+                            </label>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <input type="number" id="electricity_rate" step="0.01" min="1" max="20"
+                                       value="{{ settings.electricity_rate }}" placeholder="4.18">
+                                <span style="font-size:13px;color:var(--text-muted);white-space:nowrap;font-weight:500;">บาท / kWh</span>
+                            </div>
+                            <div class="form-hint">
+                                <i class="bi bi-info-circle" style="color:var(--secondary);"></i>
+                                อัตราเฉลี่ย PEA สำหรับที่อยู่อาศัย (ค่าเริ่มต้น: 4.50 บาท/kWh)
+                            </div>
+                        </div>
+
+                        <hr style="border-color:var(--border);margin:24px 0;">
+                        <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:16px;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:6px;">
+                            <i class="bi bi-solar-panel" style="color:var(--primary);"></i>
+                            ราคาติดตั้งระบบโซลาร์ (บาท)
+                        </div>
+
+                        <!-- System Costs Grid -->
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:12px;margin-bottom:20px;">
+                            <div>
+                                <label for="cost_3kw" style="text-align:center;display:block;margin-bottom:8px;">
+                                    <span style="display:block;font-size:17px;font-weight:800;font-family:'Inter',sans-serif;color:var(--text);">3 kW</span>
+                                    <span style="font-size:10.5px;color:var(--text-muted);">ค่าไฟ ~3,000 บ.</span>
+                                </label>
+                                <input type="number" id="cost_3kw" step="1000" min="10000" max="999999"
+                                       value="{{ settings.system_costs.get('3', 95000) }}" style="text-align:center;">
+                            </div>
+                            <div>
+                                <label for="cost_5kw" style="text-align:center;display:block;margin-bottom:8px;">
+                                    <span style="display:block;font-size:17px;font-weight:800;font-family:'Inter',sans-serif;color:var(--primary-dark);">5 kW</span>
+                                    <span style="font-size:10.5px;color:var(--primary-dark);font-weight:600;">⭐ ค่าไฟ ~5,000 บ.</span>
+                                </label>
+                                <input type="number" id="cost_5kw" step="1000" min="10000" max="999999"
+                                       value="{{ settings.system_costs.get('5', 150000) }}" style="text-align:center;border-color:var(--primary);">
+                            </div>
+                            <div>
+                                <label for="cost_10kw" style="text-align:center;display:block;margin-bottom:8px;">
+                                    <span style="display:block;font-size:17px;font-weight:800;font-family:'Inter',sans-serif;color:var(--text);">10 kW</span>
+                                    <span style="font-size:10.5px;color:var(--text-muted);">ค่าไฟ ~10,000 บ.</span>
+                                </label>
+                                <input type="number" id="cost_10kw" step="1000" min="10000" max="999999"
+                                       value="{{ settings.system_costs.get('10', 250000) }}" style="text-align:center;">
+                            </div>
+                            <div>
+                                <label for="cost_15kw" style="text-align:center;display:block;margin-bottom:8px;">
+                                    <span style="display:block;font-size:17px;font-weight:800;font-family:'Inter',sans-serif;color:var(--text);">15 kW</span>
+                                    <span style="font-size:10.5px;color:var(--text-muted);">ค่าไฟ ~15,000 บ.</span>
+                                </label>
+                                <input type="number" id="cost_15kw" step="1000" min="10000" max="999999"
+                                       value="{{ settings.system_costs.get('15', 350000) }}" style="text-align:center;">
+                            </div>
+                            <div>
+                                <label for="cost_20kw" style="text-align:center;display:block;margin-bottom:8px;">
+                                    <span style="display:block;font-size:17px;font-weight:800;font-family:'Inter',sans-serif;color:var(--text);">20 kW</span>
+                                    <span style="font-size:10.5px;color:var(--text-muted);">ค่าไฟ ~20,000 บ.</span>
+                                </label>
+                                <input type="number" id="cost_20kw" step="1000" min="10000" max="999999"
+                                       value="{{ settings.system_costs.get('20', 440000) }}" style="text-align:center;">
+                            </div>
+                        </div>
+
+                        <div class="form-hint" style="margin-bottom:24px;">
+                            <i class="bi bi-info-circle" style="color:var(--secondary);"></i>
+                            ราคาเหล่านี้ใช้คำนวณ ROI และระยะเวลาคืนทุนสำหรับทุกการวิเคราะห์ใหม่ (รวมแผง อินเวอร์เตอร์ และค่าดำเนินการ PEA)
+                        </div>
+
+                        <div style="display:flex;gap:10px;">
+                            <button onclick="saveSettings()" class="btn btn-primary" id="save-btn">
+                                <i class="bi bi-check-lg"></i> บันทึกการตั้งค่า
+                            </button>
+                            <button onclick="resetDefaults()" class="btn btn-ghost">
+                                <i class="bi bi-arrow-counterclockwise"></i> คืนค่าเริ่มต้น
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="col-lg-5">
+            <!-- AI Model Info -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="card-title mb-4">
+                        <i class="bi bi-cpu-fill" style="color:var(--indigo);"></i> ข้อมูลโมเดล AI
+                    </h6>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+                        <div style="background:linear-gradient(135deg,var(--primary-light),#e0e7ff);border-radius:var(--radius-sm);padding:14px;text-align:center;border:1px solid rgba(16,185,129,0.2);">
+                            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-dark);font-weight:700;margin-bottom:4px;">R² Score</div>
+                            <div style="font-size:28px;font-weight:800;color:var(--primary-dark);font-family:'Inter',sans-serif;line-height:1;">0.921</div>
+                        </div>
+                        <div style="background:var(--surface-2);border-radius:var(--radius-sm);padding:14px;border:1px solid var(--border);">
+                            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);font-weight:700;margin-bottom:8px;">Error Metrics</div>
+                            <div style="font-size:12px;color:var(--text-muted);">RMSE: <strong style="color:var(--text);">3.82</strong></div>
+                            <div style="font-size:12px;color:var(--text-muted);margin-top:3px;">MAE: <strong style="color:var(--text);">2.61</strong></div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        <div class="fin-row">
+                            <span class="fin-label">ชนิดโมเดล</span>
+                            <span class="fin-value" style="font-size:12px;font-family:'Inter',sans-serif;">Random Forest Regressor</span>
+                        </div>
+                        <div class="fin-row">
+                            <span class="fin-label">จำนวน Decision Trees</span>
+                            <span class="fin-value">500 estimators</span>
+                        </div>
+                        <div class="fin-row">
+                            <span class="fin-label">ข้อมูลฝึกสอน</span>
+                            <span class="fin-value">365 วัน (1 ปีเต็ม)</span>
+                        </div>
+                        <div class="fin-row">
+                            <span class="fin-label">ไฟล์โมเดล</span>
+                            <code style="font-size:10.5px;color:var(--indigo);font-family:'Inter',sans-serif;">solar_model_final_365days.pkl</code>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:14px;font-size:11.5px;color:var(--text-muted);line-height:1.7;background:var(--surface-2);padding:10px;border-radius:var(--radius-sm);">
+                        <i class="bi bi-geo-alt-fill" style="color:var(--primary);"></i>
+                        โมเดลฝึกจากข้อมูลจริงพื้นที่อำเภอบ้านโป่ง จ.ราชบุรี
+                        ใช้ข้อมูลสภาพอากาศรายเดือน (climatological averages) พร้อม lag features
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calculation Assumptions -->
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">
+                        <i class="bi bi-calculator-fill" style="color:var(--amber);"></i> สมมติฐานการคำนวณ
+                    </h6>
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface-2);border-radius:var(--radius-sm);border:1px solid var(--border);">
+                            <span style="font-size:16px;">📌</span>
+                            <div>
+                                <div style="font-size:11.5px;color:var(--text-muted);">ระบบอ้างอิง</div>
+                                <div style="font-size:13px;font-weight:600;">5 kW (Baseline)</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface-2);border-radius:var(--radius-sm);border:1px solid var(--border);">
+                            <span style="font-size:16px;">⚡</span>
+                            <div>
+                                <div style="font-size:11.5px;color:var(--text-muted);">อัตราค่าไฟเฉลี่ย PEA</div>
+                                <div style="font-size:13px;font-weight:600;">4.50 บาท/kWh</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface-2);border-radius:var(--radius-sm);border:1px solid var(--border);">
+                            <span style="font-size:16px;">☀️</span>
+                            <div>
+                                <div style="font-size:11.5px;color:var(--text-muted);">ขายไฟคืน PEA (โซลาร์ประชาชน)</div>
+                                <div style="font-size:13px;font-weight:600;">2.20 บาท/kWh</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface-2);border-radius:var(--radius-sm);border:1px solid var(--border);">
+                            <span style="font-size:16px;">🌿</span>
+                            <div>
+                                <div style="font-size:11.5px;color:var(--text-muted);">Emission Factor</div>
+                                <div style="font-size:13px;font-weight:600;">0.4985 kgCO₂/kWh</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface-2);border-radius:var(--radius-sm);border:1px solid var(--border);">
+                            <span style="font-size:16px;">🌳</span>
+                            <div>
+                                <div style="font-size:11.5px;color:var(--text-muted);">CO₂ ดูดซับ/ต้นไม้</div>
+                                <div style="font-size:13px;font-weight:600;">21.77 kg/ต้น/ปี</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface-2);border-radius:var(--radius-sm);border:1px solid var(--border);">
+                            <span style="font-size:16px;">📍</span>
+                            <div>
+                                <div style="font-size:11.5px;color:var(--text-muted);">พิกัดศูนย์กลาง</div>
+                                <div style="font-size:13px;font-weight:600;font-family:'Inter',sans-serif;">13.8264°N, 99.8780°E</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const DEFAULTS = {
+    electricity_rate: 4.50,
+    cost_3kw: 95000,
+    cost_5kw: 150000,
+    cost_10kw: 250000,
+    cost_15kw: 350000,
+    cost_20kw: 440000,
+};
+
+async function saveSettings() {
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> กำลังบันทึก...';
+
+    const body = {
+        electricity_rate: parseFloat(document.getElementById('electricity_rate').value) || DEFAULTS.electricity_rate,
+        system_costs: {
+            '3':  parseInt(document.getElementById('cost_3kw').value)  || DEFAULTS.cost_3kw,
+            '5':  parseInt(document.getElementById('cost_5kw').value)  || DEFAULTS.cost_5kw,
+            '10': parseInt(document.getElementById('cost_10kw').value) || DEFAULTS.cost_10kw,
+            '15': parseInt(document.getElementById('cost_15kw').value) || DEFAULTS.cost_15kw,
+            '20': parseInt(document.getElementById('cost_20kw').value) || DEFAULTS.cost_20kw,
+        },
+    };
+
+    try {
+        const res = await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error('Server error');
+        Toast.success('บันทึกการตั้งค่าเรียบร้อยแล้ว');
+    } catch (e) {
+        Toast.error('บันทึกไม่สำเร็จ กรุณาลองใหม่');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> บันทึกการตั้งค่า';
+    }
+}
+
+function resetDefaults() {
+    document.getElementById('electricity_rate').value = DEFAULTS.electricity_rate;
+    document.getElementById('cost_3kw').value  = DEFAULTS.cost_3kw;
+    document.getElementById('cost_5kw').value  = DEFAULTS.cost_5kw;
+    document.getElementById('cost_10kw').value = DEFAULTS.cost_10kw;
+    document.getElementById('cost_15kw').value = DEFAULTS.cost_15kw;
+    document.getElementById('cost_20kw').value = DEFAULTS.cost_20kw;
+    Toast.show('คืนค่าเริ่มต้นแล้ว');
+}
+</script>
+{% endblock %}

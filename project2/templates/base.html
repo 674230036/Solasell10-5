@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SolarAI Ban Pong{% endblock %} – ระบบสนับสนุนการตัดสินใจพลังงานแสงอาทิตย์</title>
+    <meta name="description" content="SolarAI Ban Pong – ระบบวิเคราะห์ศักยภาพพลังงานแสงอาทิตย์ด้วย AI สำหรับพื้นที่อำเภอบ้านโป่ง จังหวัดราชบุรี โดยใช้โมเดล Random Forest Regressor">
+    <meta name="theme-color" content="#0f172a">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <!-- App CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block head_extra %}{% endblock %}
+</head>
+<body data-page="{% block page_id %}{% endblock %}">
+
+<div class="app-layout">
+    <!-- ── Sidebar ─────────────────────────────────────────────────── -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">
+                <i class="bi bi-sun-fill"></i>
+            </div>
+            <div class="logo-text">
+                SolarAI
+                <small>Ban Pong DSS</small>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">ภาพรวม</div>
+            <a href="{{ url_for('dashboard') }}" class="nav-link {% if active=='dashboard' %}active{% endif %}">
+                <i class="bi bi-grid-1x2-fill"></i> แดชบอร์ด
+            </a>
+
+            <div class="nav-section-label" style="margin-top:10px;">การวิเคราะห์</div>
+            <a href="{{ url_for('gis_map') }}" class="nav-link {% if active=='map' %}active{% endif %}">
+                <i class="bi bi-map-fill"></i> GIS Analysis
+            </a>
+            <a href="{{ url_for('history_page') }}" class="nav-link {% if active=='history' %}active{% endif %}">
+                <i class="bi bi-clock-history"></i> ประวัติการวิเคราะห์
+            </a>
+
+            <div class="nav-section-label" style="margin-top:10px;">รายงาน</div>
+            <a href="{{ url_for('report_page') }}" class="nav-link {% if active=='report' %}active{% endif %}">
+                <i class="bi bi-file-earmark-bar-graph-fill"></i> ออกรายงาน
+            </a>
+
+            <div class="nav-section-label" style="margin-top:10px;">ระบบ</div>
+            <a href="{{ url_for('settings_page') }}" class="nav-link {% if active=='settings' %}active{% endif %}">
+                <i class="bi bi-gear-fill"></i> ตั้งค่า
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <div style="width:38px;height:38px;border-radius:8px;overflow:hidden;border:1.5px solid rgba(52,211,153,0.4);flex-shrink:0;">
+                    <img src="{{ url_for('static', filename='img/projects/solar_team_install.jpg') }}" alt="Field Team" style="width:100%;height:100%;object-fit:cover;">
+                </div>
+                <div style="overflow:hidden;">
+                    <div class="sidebar-footer-brand" style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">SolarAI Ban Pong</div>
+                    <div class="sidebar-footer-sub" style="font-size:10.5px;color:#94a3b8;">งานวิจัยและลงพื้นที่จริง</div>
+                </div>
+            </div>
+            <div class="sidebar-footer-badge" style="font-size:10px;justify-content:center;">
+                <i class="bi bi-geo-alt-fill text-green"></i> อ.บ้านโป่ง จ.ราชบุรี
+            </div>
+        </div>
+    </aside>
+
+    <!-- ── Main content ────────────────────────────────────────────── -->
+    <main class="main-content" id="main-content">
+        <!-- Mobile Header -->
+        <div class="mobile-header">
+            <div class="mobile-header-title">
+                <i class="bi bi-sun-fill" style="color:#34d399;margin-right:8px;"></i>SolarAI Ban Pong
+            </div>
+            <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
+
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+<!-- Toast container -->
+<div class="toast-wrap" id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    function toggleSidebar() {
+        document.getElementById('sidebar')?.classList.toggle('open');
+        document.getElementById('sidebar-overlay')?.classList.toggle('show');
+    }
+</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

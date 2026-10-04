@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% block title %}GIS Analysis{% endblock %}
+{% block page_id %}map{% endblock %}
+
+{% block content %}
+<div class="map-wrapper">
+
+    <!-- ── Map Area ─────────────────────────────────────────────────── -->
+    <div class="map-area">
+        <div id="map"></div>
+
+        <!-- Top Controls Overlay -->
+        <div class="map-topbar">
+            <div class="search-box" style="position:relative;">
+                <i class="bi bi-search"></i>
+                <input type="text" id="search-input" placeholder="ค้นหาสถานที่ในบ้านโป่ง...">
+                <button id="search-btn" style="background:none;border:none;cursor:pointer;color:var(--primary);padding:0;">
+                    <i class="bi bi-arrow-right-circle-fill" style="font-size:18px;"></i>
+                </button>
+                <div class="search-results" id="search-results" style="display:none;"></div>
+            </div>
+            <button class="map-btn" id="location-btn" title="ตำแหน่งปัจจุบัน">
+                <i class="bi bi-crosshair2"></i> ตำแหน่งฉัน
+            </button>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="map-loading">
+            <div class="spinner"></div>
+            <p>AI กำลังวิเคราะห์ข้อมูล...</p>
+        </div>
+    </div><!-- /.map-area -->
+
+    <!-- ── Result Panel (3 states) ──────────────────────────────── -->
+    <div class="result-panel" id="result-panel">
+
+        <!-- ══ STATE 1: Placeholder ══════════════════════════════════ -->
+        <div class="rp-placeholder">
+            <div class="rp-ph-icon"><i class="bi bi-geo-alt"></i></div>
+            <h4>เลือกพื้นที่วิเคราะห์</h4>
+            <p>คลิกบนแผนที่หรือค้นหาสถานที่ภายในอำเภอบ้านโป่ง จังหวัดราชบุรี</p>
+            <div class="rp-ph-hint">
+                <span><i class="bi bi-cursor-fill"></i> คลิกบนแผนที่</span>
+                <span><i class="bi bi-search"></i> ค้นหา</span>
+                <span><i class="bi bi-crosshair2"></i> GPS</span>
+            </div>
+        </div>
+
+        <!-- ══ STATE 2: Financial Input ══════════════════════════════ -->
+        <div class="rp-input">
+            <!-- Selected location header -->
+            <div class="rp-input-loc" id="rp-input-loc">
+                <div class="rp-input-loc-icon"><i class="bi bi-geo-alt-fill"></i></div>
+                <div class="rp-input-loc-info">
+                    <div class="rp-input-addr" id="rp-input-address">–</div>
+                    <div class="rp-input-coords-text" id="rp-input-coords">–</div>
+                </div>
+            </div>
+
+            <!-- Financial form -->
+            <div class="rp-input-body">
+                <div class="rp-input-section-title">
+                    <i class="bi bi-wallet2"></i> ข้อมูลการเงิน
+                </div>
+
+                <div class="rp-form-group">
+                    <label class="rp-form-label" for="monthly-bill">
+                        ค่าไฟฟ้าเฉลี่ยต่อเดือน
+                    </label>
+                    <div class="rp-number-wrap">
+                        <span class="rp-number-prefix">฿</span>
+                        <input type="number" id="monthly-bill" class="rp-number-field"
+                               value="3000" min="100" max="500000" step="100">
+                        <span class="rp-number-suffix">บาท</span>
+                    </div>
+
+                    <!-- Quick Preset Buttons -->
+                    <div class="bill-preset-container" style="margin-top:10px;">
+                        <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:6px;">
+                            <i class="bi bi-lightning-charge-fill" style="color:var(--amber);"></i> เลือกค่าไฟยอดนิยมเพื่อทดสอบ:
+                        </div>
+                        <div class="bill-presets-grid" style="display:grid;grid-template-columns:repeat(5, 1fr);gap:6px;">
+                            <button type="button" class="bill-preset-btn active" data-bill="3000">
+                                <strong>฿3,000</strong>
+                                <small>3 kW</small>
+                            </button>
+                            <button type="button" class="bill-preset-btn" data-bill="5000">
+                                <strong>฿5,000</strong>
+                                <small>5 kW</small>
+                            </button>
+                            <button type="button" class="bill-preset-btn" data-bill="10000">
+                                <strong>฿10,000</strong>
+                                <small>10 kW</small>
+                            </button>
+                            <button type="button" class="bill-preset-btn" data-bill="15000">
+                                <strong>฿15,000</strong>
+                                <small>15 kW</small>
+                            </button>
+                            <button type="button" class="bill-preset-btn" data-bill="20000">
+                                <strong>฿20,000</strong>
+                                <small>20 kW</small>
+                            </button>
+                        </div>
+                    </div>
+
+                    <p class="rp-form-hint" style="margin-top:10px;">
+                        <i class="bi bi-info-circle"></i>
+                        ดูจากบิลค่าไฟฟ้า หรือคลิกเลือกค่าไฟด้านบนเพื่อดูขนาดระบบที่แนะนำทันที
+                    </p>
+                </div>
+
+                <button id="run-analysis-btn" class="btn btn-primary rp-analyze-btn">
+                    <i class="bi bi-cpu-fill"></i> วิเคราะห์ด้วย AI
+                </button>
+
+                <button id="back-to-map-btn" class="rp-back-btn">
+                    <i class="bi bi-arrow-left"></i> เลือกตำแหน่งใหม่
+                </button>
+            </div>
+        </div>
+
+        <!-- ══ STATE 3: Results ═══════════════════════════════════════ -->
+
+        <!-- Results Header -->
+        <div class="rp-header">
+            <div>
+                <div class="rp-address" id="rp-address">–</div>
+                <div class="rp-coords"  id="rp-coords">–</div>
+            </div>
+            <button class="rp-close" onclick="closePanel()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <!-- Results Scrollable Body -->
+        <div class="rp-body">
+
+            <!-- ── 1. Suitability ──────────────────────────── -->
+            <div class="rp-section">
+                <div class="rp-suitability">
+                    <div class="rp-stars-big stars-display" id="rp-stars">★★★★★</div>
+                    <div class="rp-suitability-label" id="rp-suit-label">–</div>
+                    <div class="rp-confidence" id="rp-confidence">–</div>
+                    <div class="progress-bar-wrap" style="margin-top:8px;">
+                        <div class="progress-bar-fill blue" id="rp-conf-bar" style="width:0%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── 2. Energy Production ────────────────────── -->
+            <div class="rp-section">
+                <div class="rp-section-title">
+                    <i class="bi bi-lightning-charge-fill text-green"></i> การผลิตพลังงาน
+                </div>
+                <div class="metric-row">
+                    <div class="metric-box">
+                        <div class="metric-box-label">รายวัน</div>
+                        <div class="metric-box-val" id="rp-daily">–</div>
+                        <div class="metric-box-unit">kWh</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-box-label">รายเดือน</div>
+                        <div class="metric-box-val" id="rp-monthly">–</div>
+                        <div class="metric-box-unit">kWh</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-box-label">รายปี</div>
+                        <div class="metric-box-val" id="rp-annual">–</div>
+                        <div class="metric-box-unit">kWh</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── 3. Financial Analysis ───────────────────── -->
+            <div class="rp-section">
+                <div class="rp-section-title">
+                    <i class="bi bi-piggy-bank-fill text-green"></i> การวิเคราะห์ทางการเงิน
+                </div>
+
+                <!-- Bill comparison cards -->
+                <div class="bill-compare-cards">
+                    <div class="bill-card bill-card-before">
+                        <div class="bill-card-label">ค่าไฟปัจจุบัน / เดือน</div>
+                        <div class="bill-card-val" id="rp-cur-bill">–</div>
+                    </div>
+                    <div class="bill-compare-arrow"><i class="bi bi-arrow-right"></i></div>
+                    <div class="bill-card bill-card-after">
+                        <div class="bill-card-label">หลังติดโซล่า / เดือน</div>
+                        <div class="bill-card-val green" id="rp-after-bill">–</div>
+                    </div>
+                </div>
+
+                <div class="fin-divider"></div>
+
+                <div class="fin-row">
+                    <span class="fin-label">ประหยัด / เดือน</span>
+                    <span class="fin-value green" id="rp-save-month">–</span>
+                </div>
+                <div class="fin-row">
+                    <span class="fin-label">ประหยัด / ปี</span>
+                    <span class="fin-value green" id="rp-save-annual">–</span>
+                </div>
+                <div class="fin-row">
+                    <span class="fin-label">ROI</span>
+                    <span class="fin-value blue" id="rp-roi">–</span>
+                </div>
+                <div class="fin-row">
+                    <span class="fin-label">ระยะคืนทุน</span>
+                    <span class="fin-value" id="rp-breakeven">–</span>
+                </div>
+            </div>
+
+            <!-- ── 4. System Recommendations ──────────────── -->
+            <div class="rp-section">
+                <div class="rp-section-title">
+                    <i class="bi bi-bar-chart-fill text-green"></i> คำแนะนำขนาดระบบที่คุ้มค่าที่สุด
+                </div>
+                <div id="rp-rec-reason" class="rec-reason-banner"></div>
+                <div id="rp-systems"><!-- Populated by JS --></div>
+
+                <!-- Quick Re-calculate in Result Panel -->
+                <div class="result-recalc-box" style="margin-top:12px;padding:10px 12px;background:var(--surface-2);border-radius:var(--radius-sm);border:1px solid var(--border);">
+                    <div style="font-size:11px;font-weight:600;color:var(--text-muted);display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                        <i class="bi bi-arrow-repeat" style="color:var(--primary);"></i> ทดสอบค่าไฟระดับอื่นทันที:
+                    </div>
+                    <div class="result-presets-grid" style="display:grid;grid-template-columns:repeat(5, 1fr);gap:4px;">
+                        <button type="button" class="result-preset-btn" data-bill="3000">฿3,000</button>
+                        <button type="button" class="result-preset-btn" data-bill="5000">฿5,000</button>
+                        <button type="button" class="result-preset-btn" data-bill="10000">฿10,000</button>
+                        <button type="button" class="result-preset-btn" data-bill="15000">฿15,000</button>
+                        <button type="button" class="result-preset-btn" data-bill="20000">฿20,000</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── 5. Environmental ────────────────────────── -->
+            <div class="rp-section" style="padding-bottom:8px;">
+                <div class="rp-section-title">
+                    <i class="bi bi-tree-fill text-green"></i> ผลกระทบสิ่งแวดล้อม / ปี
+                </div>
+                <div class="env-inline">
+                    <div class="env-inline-item">
+                        <span class="env-emoji">🌿</span>
+                        <div>
+                            <div class="env-val" id="rp-co2">–</div>
+                            <div class="env-lbl">CO₂ ลดได้</div>
+                        </div>
+                    </div>
+                    <div class="env-inline-item">
+                        <span class="env-emoji">🌳</span>
+                        <div>
+                            <div class="env-val" id="rp-trees">–</div>
+                            <div class="env-lbl">เทียบต้นไม้</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /.rp-body -->
+
+        <!-- Results Sticky Footer -->
+        <div class="rp-footer">
+            <a id="rp-full-link" href="#" class="btn btn-primary w-100"
+               style="justify-content:center;padding:11px;font-size:13.5px;">
+                <i class="bi bi-bar-chart-line-fill"></i> ดูการวิเคราะห์แบบเต็ม
+            </a>
+            <button class="rp-back-btn" style="width:100%;margin-top:8px;"
+                    onclick="backToInput()">
+                <i class="bi bi-pencil"></i> แก้ไขค่าไฟ / เลือกตำแหน่งใหม่
+            </button>
+        </div>
+
+    </div><!-- /.result-panel -->
+
+</div><!-- /.map-wrapper -->
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+{% endblock %}
